@@ -30,15 +30,53 @@ This question should be answered using the `Weekly` data set, which is part of t
 
 1.   Produce some numerical and graphical summaries of the `Weekly` data. Do there appear to be any patterns?
 
+```{r}
+data(Weekly)
+names(Weekly)
+dim(Weekly)
+summary(Weekly)
+#plot(Weekly)
+pairs(Weekly)
+cor(subset(Weekly, select = -Direction))
+```
+
 2.  Use the full data set to perform a logistic regression with `Direction` as the response and the five lag variables plus `Volume` as predictors. Use the summary function to print the results. 
 
+```{r}
+glm.fits <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly ,family = binomial)
+summary(glm.fits)
+# The following codes do not give '*'s:
+#summary(glm.fits)$coefficients
+#summary(glm.fits)$coefficients[, 4]
+#coef(glm.fits)
+```
+
     Do any of the predictors appear to be statistically significant? If so, which ones?
+**`Lag2` seems to be statistically significant, since it has a relatively small p-value, while all the others' p-values are too big to give a clear evidence of a real association with `Direction`.**
 
 3.  Compute the confusion matrix and overall fraction of correct predictions. 
+
+```{r}
+contrasts(Weekly$Direction)
+glm.probs <- predict(glm.fits, type = "response")
+#glm.probs[1:10]
+glm.pred <- rep("Down", length(glm.probs))
+glm.pred[glm.probs > 0.5] <- "Up"
+table(glm.pred, Weekly$Direction)
+mean(glm.pred == Weekly$Direction)
+```
      
     Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
 
+**In this case, logistic regression correctly predicted the movement of the stock ``r sprintf("%.2f %%", 100*mean(glm.pred == Weekly$Direction))`` of the time. The confusion matrix, with the off-diagonals representing incorrect predictions including false positives and false negatives, is telling me that the training error is high.**
+
 4.  Now fit the logistic regression model using a training data period from 1990 to 2008, with `Lag2` as the only predictor. 
+
+```{r}
+Weekly.train <- (Weekly$Year < 2008)
+Weekly.test <- Weekly[!train, ]
+```
+
 
     Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
 
