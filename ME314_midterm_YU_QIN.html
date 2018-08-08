@@ -9,6 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
+<meta name="author" content="Qin Yu" />
 
 
 <title>Midterm Assignemnt, ME314 2018</title>
@@ -121,6 +122,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Midterm Assignemnt, ME314 2018</h1>
+<h4 class="author"><em>Qin Yu</em></h4>
 
 </div>
 
@@ -203,8 +205,11 @@ pairs(Weekly)</code></pre>
 ## Lag5    1.000000000 -0.05851741  0.011012698
 ## Volume -0.058517414  1.00000000 -0.033077783
 ## Today   0.011012698 -0.03307778  1.000000000</code></pre>
+<p><strong>The codes above show the significant correlation between <code>Year</code> and <code>Volume</code>, which intuitively makes sense, while the other dota does not correlate to each other in an obvious way.</strong></p>
+<hr />
 <ol start="2" style="list-style-type: decimal">
-<li>Use the full data set to perform a logistic regression with <code>Direction</code> as the response and the five lag variables plus <code>Volume</code> as predictors. Use the summary function to print the results.</li>
+<li><p>Use the full data set to perform a logistic regression with <code>Direction</code> as the response and the five lag variables plus <code>Volume</code> as predictors. Use the summary function to print the results.</p>
+<p>Do any of the predictors appear to be statistically significant? If so, which ones?</p></li>
 </ol>
 <pre class="r"><code>glm.fits &lt;- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly ,family = binomial)
 summary(glm.fits)</code></pre>
@@ -240,10 +245,11 @@ summary(glm.fits)</code></pre>
 #summary(glm.fits)$coefficients
 #summary(glm.fits)$coefficients[, 4]
 #coef(glm.fits)</code></pre>
-<p>Do any of the predictors appear to be statistically significant? If so, which ones?</p>
 <p><strong><code>Lag2</code> seems to be statistically significant, since it has a relatively small p-value, while all the others’ p-values are too big to give a clear evidence of a real association with <code>Direction</code>.</strong></p>
+<hr />
 <ol start="3" style="list-style-type: decimal">
-<li>Compute the confusion matrix and overall fraction of correct predictions.</li>
+<li><p>Compute the confusion matrix and overall fraction of correct predictions.</p>
+<p>Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.</p></li>
 </ol>
 <pre class="r"><code>contrasts(Weekly$Direction)</code></pre>
 <pre><code>##      Up
@@ -260,8 +266,8 @@ table(glm.pred, Weekly$Direction)</code></pre>
 ##     Up    430 557</code></pre>
 <pre class="r"><code>mean(glm.pred == Weekly$Direction)</code></pre>
 <pre><code>## [1] 0.5610652</code></pre>
-<p>Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.</p>
 <p><strong>In this case, logistic regression correctly predicted the movement of the stock <code>56.11 %</code> of the time. The confusion matrix, with the off-diagonals representing incorrect predictions including false positives and false negatives, is telling me that the training error is high.</strong></p>
+<hr />
 <ol start="4" style="list-style-type: decimal">
 <li>Now fit the logistic regression model using a training data period from 1990 to 2008, with <code>Lag2</code> as the only predictor.</li>
 </ol>
@@ -307,6 +313,7 @@ table(glm.pred.test, Weekly.test$Direction)</code></pre>
 <pre class="r"><code>mean(glm.pred.test == Weekly.test$Direction)</code></pre>
 <pre><code>## [1] 0.625</code></pre>
 <p><strong>Here, logistic regression correctly predicted the movement of the stock <code>62.50 %</code> of the time</strong></p>
+<hr />
 <ol start="5" style="list-style-type: decimal">
 <li><p>Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods.</p>
 <p>Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.</p></li>
@@ -330,8 +337,9 @@ wantedcombination &lt;- which.min(as.numeric(lapply(allresults, function(x) x$ai
 combinations[wantedcombination]</code></pre>
 <pre><code>## $`61`
 ## Direction ~ Lag1 + Lag2
-## &lt;environment: 0x7fe1bf5df9f0&gt;</code></pre>
-<p><strong>So, according to AIC, the best combination of predictors is <code>Lag1, Lag2</code>, for logistic regression. Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:</strong></p>
+## &lt;environment: 0x7ff6f77d09d0&gt;</code></pre>
+<p><strong>So, according to AIC, the best combination of predictors is <code>Lag1, Lag2</code>, for logistic regression.</strong></p>
+<p><strong>Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:</strong></p>
 <pre class="r"><code>allresults.train &lt;- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial, subset = train))
 allprobs &lt;- lapply(allresults, function(x) predict(x, Weekly.test, type = &quot;response&quot;))
 allpred &lt;- vector(&quot;list&quot;, length = length(allprobs))
@@ -353,8 +361,28 @@ allmean[1]  # This should be the same as Q4, verified.</code></pre>
 combinations[wantedcombination.byrate]</code></pre>
 <pre><code>## $`2`
 ## Direction ~ Lag2 + Lag3 + Lag4 + Lag5 + Volume
-## &lt;environment: 0x7fe1bf4e8d18&gt;</code></pre>
+## &lt;environment: 0x7ff6f279a6f8&gt;</code></pre>
 <p><strong>The code above is showing that <code>Direction ~ Lag2 + Lag3 + Lag4 + Lag5 + Volume</code> is the best logistic regression.</strong></p>
+<p><strong>In addition to Logistic regression, here I shall explore the results of LDA</strong></p>
+<pre class="r"><code>lda.results &lt;- lapply(combinations, function(x) lda(x, data = Weekly, subset = train))
+lda.pred &lt;- lapply(lda.results, function(x) predict(x, Weekly.test))
+lda.class &lt;- lapply(lda.pred, function(x) x$class)
+lda.means &lt;- lapply(lda.class, function(x) mean(x == Weekly.test$Direction))
+max(unlist(lda.means))</code></pre>
+<pre><code>## [1] 0.625</code></pre>
+<pre class="r"><code>which.max(lda.means)</code></pre>
+<pre><code>## 34 
+## 34</code></pre>
+<p><strong>It seems that LDA gives similar results. The next few lines shows that we cannot make predictions with high certainty.</strong></p>
+<pre class="r"><code>lda.numbers.50 &lt;- lapply(lda.pred, function(x) sum(x$posterior[, 1] &gt; 0.5))
+max(unlist(lda.numbers.50))</code></pre>
+<pre><code>## [1] 87</code></pre>
+<pre class="r"><code>lda.numbers.70 &lt;- lapply(lda.pred, function(x) sum(x$posterior[, 1] &gt; 0.7))
+max(unlist(lda.numbers.70))</code></pre>
+<pre><code>## [1] 2</code></pre>
+<pre class="r"><code>lda.numbers.90 &lt;- lapply(lda.pred, function(x) sum(x$posterior[, 1] &gt; 0.9))
+max(unlist(lda.numbers.90))</code></pre>
+<pre><code>## [1] 0</code></pre>
 </div>
 </div>
 </div>

@@ -1,5 +1,6 @@
 ---
 title: "Midterm Assignemnt, ME314 2018"
+author: "Qin Yu"
 output: html_document
 ---
  
@@ -40,7 +41,15 @@ pairs(Weekly)
 cor(subset(Weekly, select = -Direction))
 ```
 
+**The codes above show the significant correlation between `Year` and `Volume`, which intuitively makes sense, while the other dota does not correlate to each other in an obvious way.**
+
+
+***
+
+
 2.  Use the full data set to perform a logistic regression with `Direction` as the response and the five lag variables plus `Volume` as predictors. Use the summary function to print the results. 
+
+    Do any of the predictors appear to be statistically significant? If so, which ones?
 
 ```{r}
 glm.fits <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly ,family = binomial)
@@ -51,11 +60,15 @@ summary(glm.fits)
 #coef(glm.fits)
 ```
 
-  Do any of the predictors appear to be statistically significant? If so, which ones?
-
 **`Lag2` seems to be statistically significant, since it has a relatively small p-value, while all the others' p-values are too big to give a clear evidence of a real association with `Direction`.**
 
+
+***
+
+
 3.  Compute the confusion matrix and overall fraction of correct predictions. 
+    
+    Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
 
 ```{r}
 contrasts(Weekly$Direction)
@@ -67,9 +80,11 @@ table(glm.pred, Weekly$Direction)
 mean(glm.pred == Weekly$Direction)
 ```
      
-  Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
-
 **In this case, logistic regression correctly predicted the movement of the stock ``r sprintf("%.2f %%", 100*mean(glm.pred == Weekly$Direction))`` of the time. The confusion matrix, with the off-diagonals representing incorrect predictions including false positives and false negatives, is telling me that the training error is high.**
+
+
+***
+
 
 4.  Now fit the logistic regression model using a training data period from 1990 to 2008, with `Lag2` as the only predictor. 
 
@@ -96,6 +111,10 @@ mean(glm.pred.test == Weekly.test$Direction)
 
 **Here, logistic regression correctly predicted the movement of the stock ``r sprintf("%.2f %%", 100*mean(glm.pred.test == Weekly.test$Direction))`` of the time**
 
+
+***
+
+
 5.  Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods. 
 
     Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
@@ -119,7 +138,9 @@ wantedcombination <- which.min(as.numeric(lapply(allresults, function(x) x$aic))
 combinations[wantedcombination]
 ```
 
-**So, according to AIC, the best combination of predictors is ``r predictors[unlist(boolcombinations[wantedcombination, ])]``, for logistic regression. Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:**
+**So, according to AIC, the best combination of predictors is ``r predictors[unlist(boolcombinations[wantedcombination, ])]``, for logistic regression.**
+
+**Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:**
 
 ```{r}
 allresults.train <- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial, subset = train))
@@ -142,5 +163,27 @@ combinations[wantedcombination.byrate]
 ```
 
 **The code above is showing that ``r as.character(combinations[wantedcombination.byrate])`` is the best logistic regression.**
+
+**In addition to Logistic regression, here I shall explore the results of LDA**
+
+```{r}
+lda.results <- lapply(combinations, function(x) lda(x, data = Weekly, subset = train))
+lda.pred <- lapply(lda.results, function(x) predict(x, Weekly.test))
+lda.class <- lapply(lda.pred, function(x) x$class)
+lda.means <- lapply(lda.class, function(x) mean(x == Weekly.test$Direction))
+max(unlist(lda.means))
+which.max(lda.means)
+```
+
+**It seems that LDA gives similar results. The next few lines shows that we cannot make predictions with high certainty.**
+
+```{r}
+lda.numbers.50 <- lapply(lda.pred, function(x) sum(x$posterior[, 1] > 0.5))
+max(unlist(lda.numbers.50))
+lda.numbers.70 <- lapply(lda.pred, function(x) sum(x$posterior[, 1] > 0.7))
+max(unlist(lda.numbers.70))
+lda.numbers.90 <- lapply(lda.pred, function(x) sum(x$posterior[, 1] > 0.9))
+max(unlist(lda.numbers.90))
+```
 
 
