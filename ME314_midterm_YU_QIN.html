@@ -310,23 +310,28 @@ table(glm.pred.test, Weekly.test$Direction)</code></pre>
 <ol start="5" style="list-style-type: decimal">
 <li>Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods.</li>
 </ol>
-<pre class="r"><code># glm.fits.subset &lt;- glm(Direction ~ Lag2, data = Weekly ,family = binomial, subset = train)
-# summary(glm.fits.subset)
-# 
-# regressors &lt;- c(&quot;y1&quot;, &quot;y2&quot;, &quot;y3&quot;, &quot;y4&quot;)
-# vec &lt;- c(T, F, T, F)
-# regressors[vec]
-# paste(regressors[vec], collapse=&quot; + &quot;)
-
-predictors &lt;- names(Weekly)[2: 7]
+<p><strong>Firstly, try all the combinations of predictors:</strong></p>
+<pre class="r"><code>predictors &lt;- names(Weekly)[2: 7]
+# Getting all combinations of predictors:
 boolcombinations &lt;- expand.grid(rep(list(c(TRUE, FALSE)), length(predictors)))
 boolcombinations &lt;- boolcombinations[-(dim(boolcombinations)[1]), ]
 combinations &lt;- apply(boolcombinations, 1, function(x) as.formula(
-  paste(c(&quot;Direction ~ 1 &quot;, 
-        predictors[x]), collapse = &quot; + &quot;)
-        )
-  )</code></pre>
-<pre><code>Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.</code></pre>
+  paste(&quot;Direction ~ &quot;, paste(predictors[x], collapse = &quot; + &quot;), sep =&quot;&quot;)
+  ))
+# Getting all glm:
+allresults &lt;- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial))
+allresults[[1]]$aic  # Verify that this AIC has the same value as in Q2</code></pre>
+<pre><code>## [1] 1500.357</code></pre>
+<pre class="r"><code>min(as.numeric(lapply(allresults, function(x) x$aic)))</code></pre>
+<pre><code>## [1] 1494.22</code></pre>
+<pre class="r"><code># Finding the best combination:
+wantedcombination &lt;- which.min(as.numeric(lapply(allresults, function(x) x$aic)))
+combinations[wantedcombination]</code></pre>
+<pre><code>## $`61`
+## Direction ~ Lag1 + Lag2
+## &lt;environment: 0x000000001cf83d20&gt;</code></pre>
+<p><strong>So, the best combination of predictors is <code>Lag1, Lag2</code>, for logistic regression.</strong></p>
+<p>Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.</p>
 </div>
 </div>
 </div>

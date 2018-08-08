@@ -98,22 +98,32 @@ mean(glm.pred.test == Weekly.test$Direction)
 
 5.  Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods. 
 
-```{r}
-# glm.fits.subset <- glm(Direction ~ Lag2, data = Weekly ,family = binomial, subset = train)
-# summary(glm.fits.subset)
-# 
-# regressors <- c("y1", "y2", "y3", "y4")
-# vec <- c(T, F, T, F)
-# regressors[vec]
-# paste(regressors[vec], collapse=" + ")
+**Firstly, try all the combinations of predictors:**
 
+```{r}
 predictors <- names(Weekly)[2: 7]
+# Getting all combinations of predictors:
 boolcombinations <- expand.grid(rep(list(c(TRUE, FALSE)), length(predictors)))
 boolcombinations <- boolcombinations[-(dim(boolcombinations)[1]), ]
 combinations <- apply(boolcombinations, 1, function(x) as.formula(
-  paste(c("Direction ~ 1 ", predictors[x]), collapse = " + ")))
-
+  paste("Direction ~ ", paste(predictors[x], collapse = " + "), sep ="")
+  ))
+# Getting all glm:
+allresults <- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial))
+allresults[[1]]$aic  # Verify that this AIC has the same value as in Q2
+min(as.numeric(lapply(allresults, function(x) x$aic)))
+# Finding the best combination:
+wantedcombination <- which.min(as.numeric(lapply(allresults, function(x) x$aic)))
+combinations[wantedcombination]
 ```
 
+**So, according to AIC, the best combination of predictors is ``r predictors[unlist(boolcombinations[wantedcombination, ])]``, for logistic regression.**
 
-    Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
+```{r}
+allresults.train <- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial, subset = train))
+allprobs <- lapply(allresults, function(x) predict(x, Weekly.test, type = "response"))
+allpred <- vector("list", length = length(allprobs))
+allpred <- lapply(allprobs, function(x) rep("Down", length(allprobs[1])))
+```
+
+  Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
