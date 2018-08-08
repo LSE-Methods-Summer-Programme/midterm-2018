@@ -98,6 +98,8 @@ mean(glm.pred.test == Weekly.test$Direction)
 
 5.  Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods. 
 
+    Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
+    
 **Firstly, try all the combinations of predictors:**
 
 ```{r}
@@ -117,13 +119,28 @@ wantedcombination <- which.min(as.numeric(lapply(allresults, function(x) x$aic))
 combinations[wantedcombination]
 ```
 
-**So, according to AIC, the best combination of predictors is ``r predictors[unlist(boolcombinations[wantedcombination, ])]``, for logistic regression.**
+**So, according to AIC, the best combination of predictors is ``r predictors[unlist(boolcombinations[wantedcombination, ])]``, for logistic regression. Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:**
 
 ```{r}
 allresults.train <- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial, subset = train))
 allprobs <- lapply(allresults, function(x) predict(x, Weekly.test, type = "response"))
 allpred <- vector("list", length = length(allprobs))
-allpred <- lapply(allprobs, function(x) rep("Down", length(allprobs[1])))
+#allpred <- lapply(allpred, function(x) unlist(x))
+#allpred[1] <- list(rep("Down", dim(Weekly.test)[1]))
+allpred[c(1:length(allpred))] <- list(rep("Down", dim(Weekly.test)[1]))
+for (i in 1:length(allpred)) {
+  for (j in 1:dim(Weekly.test)[1]) {
+    if (allprobs[[i]][j] > 0.5) {
+      allpred[[i]][j] <- "Up"
+    }
+  }
+}
+allmean <- lapply(allpred, function(x) mean(x == Weekly.test$Direction))
+allmean[1]  # This should be the same as Q4, verified.
+wantedcombination.byrate <- which.max(allmean)
+combinations[wantedcombination.byrate]
 ```
 
-  Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
+**The code above is showing that ``r as.character(combinations[wantedcombination.byrate])`` is the best logistic regression.**
+
+
