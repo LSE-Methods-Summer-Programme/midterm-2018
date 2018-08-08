@@ -51,7 +51,8 @@ summary(glm.fits)
 #coef(glm.fits)
 ```
 
-    Do any of the predictors appear to be statistically significant? If so, which ones?
+  Do any of the predictors appear to be statistically significant? If so, which ones?
+
 **`Lag2` seems to be statistically significant, since it has a relatively small p-value, while all the others' p-values are too big to give a clear evidence of a real association with `Direction`.**
 
 3.  Compute the confusion matrix and overall fraction of correct predictions. 
@@ -66,21 +67,53 @@ table(glm.pred, Weekly$Direction)
 mean(glm.pred == Weekly$Direction)
 ```
      
-    Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
+  Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
 
 **In this case, logistic regression correctly predicted the movement of the stock ``r sprintf("%.2f %%", 100*mean(glm.pred == Weekly$Direction))`` of the time. The confusion matrix, with the off-diagonals representing incorrect predictions including false positives and false negatives, is telling me that the training error is high.**
 
 4.  Now fit the logistic regression model using a training data period from 1990 to 2008, with `Lag2` as the only predictor. 
 
 ```{r}
-Weekly.train <- (Weekly$Year < 2008)
+train <- (Weekly$Year < 2009)
 Weekly.test <- Weekly[!train, ]
+Weekly.train <- Weekly[train, ]
+glm.fits.subset <- glm(Direction ~ Lag2, data = Weekly ,family = binomial, subset = train)
+summary(glm.fits.subset)
+#glm.fits.train <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly.train ,family = binomial)
+#summary(glm.fits.train)
 ```
 
 
-    Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
+  Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
 
+```{r}
+glm.probs.test <- predict(glm.fits.subset, Weekly.test, type = "response")
+glm.pred.test <- rep("Down", length(glm.probs.test))
+glm.pred.test[glm.probs.test > 0.5] <- "Up"
+table(glm.pred.test, Weekly.test$Direction)
+mean(glm.pred.test == Weekly.test$Direction)
+```
+
+**Here, logistic regression correctly predicted the movement of the stock ``r sprintf("%.2f %%", 100*mean(glm.pred.test == Weekly.test$Direction))`` of the time**
 
 5.  Experiment with different combinations of predictors, including possible transformations and interactions, and classification methods. 
+
+```{r}
+# glm.fits.subset <- glm(Direction ~ Lag2, data = Weekly ,family = binomial, subset = train)
+# summary(glm.fits.subset)
+# 
+# regressors <- c("y1", "y2", "y3", "y4")
+# vec <- c(T, F, T, F)
+# regressors[vec]
+# paste(regressors[vec], collapse=" + ")
+
+predictors <- names(Weekly)[2: 7]
+boolcombinations <- expand.grid(rep(list(c(TRUE, FALSE)), length(predictors)))
+boolcombinations <- boolcombinations[-(dim(boolcombinations)[1]), ]
+combinations <- apply(boolcombinations, 1, function(x) as.formula(
+  paste(c("Direction ~ 1 ", predictors[x]), collapse = " + ")))
+
+```
+
 
     Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data.
