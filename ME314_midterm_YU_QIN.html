@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Qin Yu" />
+<meta name="author" content="Qin Yu, LSE ID: 201775289" />
 
 
 <title>Midterm Assignemnt, ME314 2018</title>
@@ -122,7 +122,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Midterm Assignemnt, ME314 2018</h1>
-<h4 class="author"><em>Qin Yu</em></h4>
+<h4 class="author"><em>Qin Yu, LSE ID: 201775289</em></h4>
 
 </div>
 
@@ -337,7 +337,7 @@ wantedcombination &lt;- which.min(as.numeric(lapply(allresults, function(x) x$ai
 combinations[wantedcombination]</code></pre>
 <pre><code>## $`61`
 ## Direction ~ Lag1 + Lag2
-## &lt;environment: 0x7ff6f77d09d0&gt;</code></pre>
+## &lt;environment: 0x7f80b5b58e18&gt;</code></pre>
 <p><strong>So, according to AIC, the best combination of predictors is <code>Lag1, Lag2</code>, for logistic regression.</strong></p>
 <p><strong>Now, try to find the best combination regarding the error rate, with data prior to 2009 as training set:</strong></p>
 <pre class="r"><code>allresults.train &lt;- lapply(combinations, function(x) glm(x, data = Weekly ,family = binomial, subset = train))
@@ -361,7 +361,7 @@ allmean[1]  # This should be the same as Q4, verified.</code></pre>
 combinations[wantedcombination.byrate]</code></pre>
 <pre><code>## $`2`
 ## Direction ~ Lag2 + Lag3 + Lag4 + Lag5 + Volume
-## &lt;environment: 0x7ff6f279a6f8&gt;</code></pre>
+## &lt;environment: 0x7f80b59f7340&gt;</code></pre>
 <p><strong>The code above is showing that <code>Direction ~ Lag2 + Lag3 + Lag4 + Lag5 + Volume</code> is the best logistic regression.</strong></p>
 <p><strong>In addition to Logistic regression, here I shall explore the results of LDA</strong></p>
 <pre class="r"><code>lda.results &lt;- lapply(combinations, function(x) lda(x, data = Weekly, subset = train))
@@ -370,10 +370,11 @@ lda.class &lt;- lapply(lda.pred, function(x) x$class)
 lda.means &lt;- lapply(lda.class, function(x) mean(x == Weekly.test$Direction))
 max(unlist(lda.means))</code></pre>
 <pre><code>## [1] 0.625</code></pre>
-<pre class="r"><code>which.max(lda.means)</code></pre>
-<pre><code>## 34 
-## 34</code></pre>
-<p><strong>It seems that LDA gives similar results. The next few lines shows that we cannot make predictions with high certainty.</strong></p>
+<pre class="r"><code>combinations[which.max(lda.means)]</code></pre>
+<pre><code>## $`34`
+## Direction ~ Lag2 + Lag3 + Lag4 + Lag5
+## &lt;environment: 0x7f80b5b00238&gt;</code></pre>
+<p><strong>It seems that LDA gives similar results, and <code>Direction ~ Lag2 + Lag3 + Lag4 + Lag5</code> will have a better guess. The next few lines shows that we cannot make predictions with high certainty.</strong></p>
 <pre class="r"><code>lda.numbers.50 &lt;- lapply(lda.pred, function(x) sum(x$posterior[, 1] &gt; 0.5))
 max(unlist(lda.numbers.50))</code></pre>
 <pre><code>## [1] 87</code></pre>
@@ -383,6 +384,29 @@ max(unlist(lda.numbers.70))</code></pre>
 <pre class="r"><code>lda.numbers.90 &lt;- lapply(lda.pred, function(x) sum(x$posterior[, 1] &gt; 0.9))
 max(unlist(lda.numbers.90))</code></pre>
 <pre><code>## [1] 0</code></pre>
+<pre class="r"><code>qda.results &lt;- lapply(combinations, function(x) qda(x, data = Weekly, subset = train))
+qda.pred &lt;- lapply(qda.results, function(x) predict(x, Weekly.test))
+qda.class &lt;- lapply(qda.pred, function(x) x$class)
+qda.means &lt;- lapply(qda.class, function(x) mean(x == Weekly.test$Direction))
+max(unlist(qda.means))</code></pre>
+<pre><code>## [1] 0.6153846</code></pre>
+<pre class="r"><code>combinations[which.max(qda.means)]</code></pre>
+<pre><code>## $`59`
+## Direction ~ Lag1 + Lag3
+## &lt;environment: 0x7f80b5b50b78&gt;</code></pre>
+<p><strong><code>Direction ~ Lag1 + Lag3</code> gives the least error rate.</strong></p>
+<pre class="r"><code>qda.numbers.50 &lt;- lapply(qda.pred, function(x) sum(x$posterior[, 1] &gt; 0.5))
+max(unlist(qda.numbers.50))</code></pre>
+<pre><code>## [1] 102</code></pre>
+<pre class="r"><code>qda.numbers.70 &lt;- lapply(qda.pred, function(x) sum(x$posterior[, 1] &gt; 0.7))
+max(unlist(qda.numbers.70))</code></pre>
+<pre><code>## [1] 62</code></pre>
+<pre class="r"><code>qda.numbers.90 &lt;- lapply(qda.pred, function(x) sum(x$posterior[, 1] &gt; 0.9))
+max(unlist(qda.numbers.90))</code></pre>
+<pre><code>## [1] 24</code></pre>
+<p><strong>However, in this case, although the quadratic form assumed by QDA does not capture the true relationship more accurately than the linear forms assumed by LDA and logistic regression, we can see that the certainty is very high from the last three lines.</strong></p>
+<hr />
+<p>Thank you!</p>
 </div>
 </div>
 </div>

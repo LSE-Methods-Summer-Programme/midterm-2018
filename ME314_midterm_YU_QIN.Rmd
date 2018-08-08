@@ -1,6 +1,6 @@
 ---
 title: "Midterm Assignemnt, ME314 2018"
-author: "Qin Yu"
+author: "Qin Yu, LSE ID: 201775289"
 output: html_document
 ---
  
@@ -172,10 +172,10 @@ lda.pred <- lapply(lda.results, function(x) predict(x, Weekly.test))
 lda.class <- lapply(lda.pred, function(x) x$class)
 lda.means <- lapply(lda.class, function(x) mean(x == Weekly.test$Direction))
 max(unlist(lda.means))
-which.max(lda.means)
+combinations[which.max(lda.means)]
 ```
 
-**It seems that LDA gives similar results. The next few lines shows that we cannot make predictions with high certainty.**
+**It seems that LDA gives similar results, and ``r as.character(combinations[which.max(lda.means)])`` will have a better guess. The next few lines shows that we cannot make predictions with high certainty.**
 
 ```{r}
 lda.numbers.50 <- lapply(lda.pred, function(x) sum(x$posterior[, 1] > 0.5))
@@ -186,4 +186,28 @@ lda.numbers.90 <- lapply(lda.pred, function(x) sum(x$posterior[, 1] > 0.9))
 max(unlist(lda.numbers.90))
 ```
 
+```{r}
+qda.results <- lapply(combinations, function(x) qda(x, data = Weekly, subset = train))
+qda.pred <- lapply(qda.results, function(x) predict(x, Weekly.test))
+qda.class <- lapply(qda.pred, function(x) x$class)
+qda.means <- lapply(qda.class, function(x) mean(x == Weekly.test$Direction))
+max(unlist(qda.means))
+combinations[which.max(qda.means)]
+```
 
+**``r as.character(combinations[which.max(qda.means)])`` gives the least error rate.**
+
+```{r}
+qda.numbers.50 <- lapply(qda.pred, function(x) sum(x$posterior[, 1] > 0.5))
+max(unlist(qda.numbers.50))
+qda.numbers.70 <- lapply(qda.pred, function(x) sum(x$posterior[, 1] > 0.7))
+max(unlist(qda.numbers.70))
+qda.numbers.90 <- lapply(qda.pred, function(x) sum(x$posterior[, 1] > 0.9))
+max(unlist(qda.numbers.90))
+```
+
+**However, in this case, although the quadratic form assumed by QDA does not capture the true relationship more accurately than the linear forms assumed by LDA and logistic regression, we can see that the certainty is very high from the last three lines.**
+
+***
+
+Thank you!
